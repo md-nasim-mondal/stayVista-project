@@ -3,11 +3,17 @@ import { FcGoogle } from "react-icons/fc"
 import useAuth from "./../../hooks/useAuth"
 import axios from "axios"
 import toast from "react-hot-toast"
-import { TbFidgetSpinner } from "react-icons/tb";
+import { TbFidgetSpinner } from "react-icons/tb"
 
 const SignUp = () => {
   const navigate = useNavigate()
-  const { createUser, signInWithGoogle, updateUserProfile, loading, setLoading } = useAuth()
+  const {
+    createUser,
+    signInWithGoogle,
+    updateUserProfile,
+    loading,
+    setLoading,
+  } = useAuth()
   const handleSubmit = async (e) => {
     e.preventDefault()
     const form = e.target
@@ -27,7 +33,7 @@ const SignUp = () => {
         }`,
         formData
       )
-      console.log(data.data.display_url)
+      // console.log(data.data.display_url)
 
       // 2. User Registration
       await createUser(email, password)
@@ -35,13 +41,28 @@ const SignUp = () => {
       // 3. Save username and photo in firebase
       await updateUserProfile(name, data.data.display_url)
 
-      navigate("/")
+      await navigate("/")
       toast.success("SignUp Successful")
+    } catch (err) {
+      console.log(err)
+      toast.error(err.message)
+      setLoading(false)
+    }
+  }
+
+  // handle google signIn
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle()
+
+      await navigate("/")
+      toast.success("LogIn Successful With Google")
     } catch (err) {
       console.log(err)
       toast.error(err.message)
     }
   }
+
   return (
     <div className='flex justify-center items-center min-h-screen'>
       <div className='flex flex-col max-w-md p-6 rounded-md sm:p-10 bg-gray-100 text-gray-900'>
@@ -113,7 +134,11 @@ const SignUp = () => {
               disabled={loading}
               type='submit'
               className='bg-rose-500 w-full rounded-md py-3 text-white'>
-              {loading ? <TbFidgetSpinner className="animate-spin m-auto" /> : "Continue"}
+              {loading ? (
+                <TbFidgetSpinner className='animate-spin m-auto' />
+              ) : (
+                "Continue"
+              )}
             </button>
           </div>
         </form>
@@ -124,11 +149,14 @@ const SignUp = () => {
           </p>
           <div className='flex-1 h-px sm:w-16 dark:bg-gray-700'></div>
         </div>
-        <div className='flex justify-center items-center space-x-2 border m-3 p-2 border-gray-300 border-rounded cursor-pointer'>
+        <button
+          disabled={loading}
+          onClick={handleGoogleSignIn}
+          className='disabled:cursor-not-allowed flex justify-center items-center space-x-2 border m-3 p-2 border-gray-300 border-rounded cursor-pointer'>
           <FcGoogle size={32} />
 
           <p>Continue with Google</p>
-        </div>
+        </button>
         <p className='px-6 text-sm text-center text-gray-400'>
           Already have an account?{" "}
           <Link
