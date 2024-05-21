@@ -1,12 +1,17 @@
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { FcGoogle } from "react-icons/fc"
 import useAuth from "../../hooks/useAuth"
 import toast from "react-hot-toast"
 import { TbFidgetSpinner } from "react-icons/tb"
+import { useState } from "react"
 
 const Login = () => {
   const navigate = useNavigate()
-  const { signIn, signInWithGoogle, loading, setLoading } = useAuth()
+  const location = useLocation();
+  const from = location?.state || '/'
+  const { signIn, signInWithGoogle, loading, setLoading, resetPassword } =
+    useAuth()
+  const [email, setEmail] = useState("")
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,8 +23,23 @@ const Login = () => {
       setLoading(true)
       // 1. sign In user
       await signIn(email, password)
-      await navigate("/")
+      navigate(from)
       toast.success("SignIn Successful")
+    } catch (err) {
+      console.log(err)
+      toast.error(err.message)
+      setLoading(false)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!email) return toast.error("Please write your email first!")
+    try {
+      await resetPassword(email)
+      toast.success(
+        "Request Success! Check your email for further process.........."
+      )
+      setLoading(false)
     } catch (err) {
       console.log(err)
       toast.error(err.message)
@@ -30,7 +50,7 @@ const Login = () => {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle()
-      navigate("/")
+      navigate(from)
       toast.success("LogIn Successful With Google")
     } catch (err) {
       console.log(err)
@@ -57,6 +77,7 @@ const Login = () => {
               <input
                 type='email'
                 name='email'
+                onBlur={(e) => setEmail(e.target.value)}
                 id='email'
                 required
                 placeholder='Enter Your Email Here'
@@ -96,7 +117,9 @@ const Login = () => {
           </div>
         </form>
         <div className='space-y-1'>
-          <button className='text-xs hover:underline hover:text-rose-500 text-gray-400'>
+          <button
+            onClick={handleResetPassword}
+            className='text-xs hover:underline hover:text-rose-500 text-gray-400'>
             Forgot password?
           </button>
         </div>
