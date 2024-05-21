@@ -5,6 +5,7 @@ import Heading from "../Shared/Heading"
 import LoadingSpinner from "../Shared/LoadingSpinner"
 import { useQuery } from "@tanstack/react-query"
 import useAxiosCommon from "../../hooks/useAxiosCommon"
+import { useSearchParams } from "react-router-dom"
 
 const Rooms = () => {
   // const [rooms, setRooms] = useState([])
@@ -25,11 +26,15 @@ const Rooms = () => {
   // we can write it like as query = useQuery() where we will get data,isLoading and other things.....
 
   const axiosCommon = useAxiosCommon()
+  // eslint-disable-next-line no-unused-vars
+  const [params, setParams] = useSearchParams()
+  const category = params.get('category')
+  // console.log(category);
 
   const { data: rooms = [], isLoading } = useQuery({
-    queryKey: ["rooms"],
+    queryKey: ["rooms", category],
     queryFn: async () => {
-      const { data } = await axiosCommon.get("/rooms")
+      const { data } = await axiosCommon.get(`/rooms?category=${category}`)
       return data
     },
   })
