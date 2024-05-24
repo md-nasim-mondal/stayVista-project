@@ -41,7 +41,7 @@ const Login = () => {
       )
       setLoading(false)
     } catch (err) {
-      console.log(err)
+      // console.log(err)
       toast.error(err.message)
       setLoading(false)
     }
@@ -53,7 +53,7 @@ const Login = () => {
       navigate(from)
       toast.success("LogIn Successful With Google")
     } catch (err) {
-      console.log(err)
+      // console.log(err)
       toast.error(err.message)
     }
   }

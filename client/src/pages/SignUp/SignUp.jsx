@@ -1,69 +1,62 @@
-import { Link, useLocation, useNavigate } from "react-router-dom"
-import { FcGoogle } from "react-icons/fc"
-import useAuth from "./../../hooks/useAuth"
-import axios from "axios"
-import toast from "react-hot-toast"
-import { TbFidgetSpinner } from "react-icons/tb"
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { FcGoogle } from "react-icons/fc";
+import useAuth from "./../../hooks/useAuth";
+import toast from "react-hot-toast";
+import { TbFidgetSpinner } from "react-icons/tb";
+import { imageUpload } from "../../api/utils";
 
 const SignUp = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const from = location?.state || "/"
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location?.state || "/";
   const {
     createUser,
     signInWithGoogle,
     updateUserProfile,
     loading,
     setLoading,
-  } = useAuth()
+  } = useAuth();
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const form = e.target
-    const name = form.name.value
-    const email = form.email.value
-    const password = form.password.value
-    const image = form.image.files[0]
-    const formData = new FormData()
-    formData.append("image", image)
+    e.preventDefault();
+    const form = e.target;
+    const name = form.name.value;
+    const email = form.email.value;
+    const password = form.password.value;
+    const image = form.image.files[0];
 
     try {
-      setLoading(true)
+      setLoading(true);
       // 1. Upload image and get image url
-      const { data } = await axios.post(
-        `https://api.imgbb.com/1/upload?key=${
-          import.meta.env.VITE_IMGBB_API_KEY
-        }`,
-        formData
-      )
-      // console.log(data.data.display_url)
+      const image_url = await imageUpload(image);
+      // console.log(image_url)
 
       // 2. User Registration
-      await createUser(email, password)
+      await createUser(email, password);
 
       // 3. Save username and photo in firebase
-      await updateUserProfile(name, data.data.display_url)
+      await updateUserProfile(name, image_url);
 
-      navigate(form)
-      toast.success("SignUp Successful")
+      navigate(from);
+      toast.success("SignUp Successful");
     } catch (err) {
-      console.log(err)
-      toast.error(err.message)
-      setLoading(false)
+      console.log(err);
+      toast.error(err.message);
+      setLoading(false);
     }
-  }
+  };
 
   // handle google signIn
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle()
+      await signInWithGoogle();
 
-      navigate(from)
-      toast.success("LogIn Successful With Google")
+      navigate(from);
+      toast.success("LogIn Successful With Google");
     } catch (err) {
-      console.log(err)
-      toast.error(err.message)
+      console.log(err);
+      toast.error(err.message);
     }
-  }
+  };
 
   return (
     <div className='flex justify-center items-center min-h-screen'>
@@ -170,7 +163,7 @@ const SignUp = () => {
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SignUp
+export default SignUp;
