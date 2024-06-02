@@ -75,7 +75,7 @@ async function run() {
             sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
           })
           .send({ success: true });
-        console.log("Logout successful");
+        // console.log("Logout successful");
       } catch (err) {
         res.status(500).send(err);
       }
@@ -99,7 +99,7 @@ async function run() {
           // if existing user login again
           return res.send(isExist);
         }
-      } 
+      }
 
       // save user for the first time
       const options = { upsert: true };
@@ -110,6 +110,13 @@ async function run() {
         },
       };
       const result = await usersCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
+    // get user info by email from db
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await usersCollection.findOne({ email });
       res.send(result);
     });
 
