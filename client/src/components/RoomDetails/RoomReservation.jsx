@@ -6,7 +6,7 @@ import { differenceInCalendarDays } from "date-fns";
 import BookingModal from "../Modal/BookingModal";
 import useAuth from "./../../hooks/useAuth";
 
-const RoomReservation = ({ room }) => {
+const RoomReservation = ({ room, refetch }) => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [state, setState] = useState([
@@ -18,8 +18,8 @@ const RoomReservation = ({ room }) => {
   ]);
 
   const closeModal = () => {
-    setIsOpen(false)
-  }
+    setIsOpen(false);
+  };
 
   // total days * price
   const totalPrice =
@@ -54,10 +54,27 @@ const RoomReservation = ({ room }) => {
       </div>
       <hr />
       <div className='p-4'>
-        <Button onClick={() => setIsOpen(true)} label={"Reserve"} />
+        <Button
+          disabled={room?.booked === true}
+          onClick={() => setIsOpen(true)}
+          label={room?.booked === true ? "Booked" :"Reserve"}
+        />
       </div>
       {/* Modal */}
-      <BookingModal isOpen={isOpen} closeModal={closeModal} bookingInfo={{...room, price: totalPrice, guest:{name: user?.displayName}}} />
+      <BookingModal
+        refetch={refetch}
+        isOpen={isOpen}
+        closeModal={closeModal}
+        bookingInfo={{
+          ...room,
+          price: totalPrice,
+          guest: {
+            name: user?.displayName,
+            email: user?.email,
+            image: user?.photURL,
+          },
+        }}
+      />
       <hr />
       <div className='p-4 flex items-center justify-between font-semibold text-lg'>
         <div>Total</div>
@@ -69,6 +86,7 @@ const RoomReservation = ({ room }) => {
 
 RoomReservation.propTypes = {
   room: PropTypes.object,
+  refetch: PropTypes.func,
 };
 
 export default RoomReservation;

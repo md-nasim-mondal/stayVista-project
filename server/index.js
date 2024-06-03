@@ -5,7 +5,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 8000;
 
 // middleware
@@ -49,26 +49,30 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const roomsCollection = client.db("stayVistaDB").collection("rooms");
-    const usersCollection = client.db("stayVistaDB").collection("users");
+    const db = client.db("stayVistaDB");
+    const roomsCollection = db.collection("rooms");
+    const usersCollection = db.collection("users");
+    const bookingsCollection = db.collection("bookings");
 
     // verify admin middleware
     const verifyAdmin = async (req, res, next) => {
       const user = req.user;
-      const query = { email: user?.email }
+      const query = { email: user?.email };
       const result = await usersCollection.findOne(query);
-      if (!result || result?.role !== 'admin') return res.status(401).send({ message: "unauthorized access!!" })
-      next()
-    }
+      if (!result || result?.role !== "admin")
+        return res.status(401).send({ message: "unauthorized access!!" });
+      next();
+    };
 
     // verify host middleware
     const verifyHost = async (req, res, next) => {
       const user = req.user;
-      const query = { email: user?.email }
+      const query = { email: user?.email };
       const result = await usersCollection.findOne(query);
-      if (!result || result?.role !== 'host') return res.status(401).send({ message: "unauthorized access!!" })
-      next()
-    }
+      if (!result || result?.role !== "host")
+        return res.status(401).send({ message: "unauthorized access!!" });
+      next();
+    };
 
     // auth related api
     app.post("/jwt", async (req, res) => {
@@ -98,6 +102,24 @@ async function run() {
       } catch (err) {
         res.status(500).send(err);
       }
+    });
+
+    // create-payment-intent
+    app.post("/create-payment-intent", verifyToken, async (req, res) => {
+      const price = req.body.price;
+      const priceInCent = parseFloat(price) * 100;
+      if (!price || priceInCent < 1) return;
+      // generate clientSecret
+      const { client_secret } = await stripe.paymentIntents.create({
+        amount: priceInCent,
+        currency: "usd",
+        // In the latest version of the API, specifying the `automatic_payment_methods` parameter is optional because Stripe enables its functionality by default.
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+      // send client secret as response
+      res.send({ clientSecret: client_secret });
     });
 
     // save user data in db
@@ -146,18 +168,19 @@ async function run() {
     });
 
     // update a user role
-    app.patch('/users/update/:email', async (req, res) => {
+    app.patch("/users/update/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
-      const query = { email }
+      const query = { email };
       const updateDoc = {
         $set: {
-          ...user, timestamp: Date.now()
-        }
-      } 
-      const result = await usersCollection.updateOne(query, updateDoc)
-      res.send(result)
-    })
+          ...user,
+          timestamp: Date.now(),
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
     // Get all rooms from DB
     app.get("/rooms", async (req, res) => {
@@ -175,12 +198,17 @@ async function run() {
     });
 
     // get all rooms for host
-    app.get("/my-listings/:email", verifyToken, verifyHost, async (req, res) => {
-      const email = req.params.email;
-      let query = { "host.email": email };
-      const result = await roomsCollection.find(query).toArray();
-      res.send(result);
-    });
+    app.get(
+      "/my-listings/:email",
+      verifyToken,
+      verifyHost,
+      async (req, res) => {
+        const email = req.params.email;
+        let query = { "host.email": email };
+        const result = await roomsCollection.find(query).toArray();
+        res.send(result);
+      }
+    );
 
     // delete a room
     app.delete("/room/:id", verifyToken, verifyHost, async (req, res) => {
@@ -197,6 +225,36 @@ async function run() {
       const result = await roomsCollection.findOne(query);
       res.send(result);
     });
+
+    // Save a booking data in db
+    app.post("/booking", verifyToken, async (req, res) => {
+      const bookingData = req.body;
+      // save room booking info
+      const result = await bookingsCollection.insertOne(bookingData);
+
+      // // change room availability status
+      // const roomId = bookingData.roomId;
+      // const query = { _id: new ObjectId(roomId) };
+      // const updateDoc = {
+      //   $set: { booked: true },
+      // };
+      // const updatedRoom = await roomsCollection.updateOne(query, updateDoc);
+      // res.send({result, updatedRoom});
+      res.send(result)
+    });
+
+    // update Room Status
+    app.patch('/room/status/:id', async (req, res) => {
+      const id = req.params.id;
+      const status = req.body.status;
+      // change room availability status
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: { booked: status },
+      };
+      const result = await roomsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
