@@ -22,7 +22,7 @@ app.use(cookieParser());
 // Verify Token Middleware
 const verifyToken = async (req, res, next) => {
   const token = req.cookies?.token;
-  console.log(token);
+  // console.log(token);
   if (!token) {
     return res.status(401).send({ message: "unauthorized access" });
   }
@@ -240,11 +240,11 @@ async function run() {
       // };
       // const updatedRoom = await roomsCollection.updateOne(query, updateDoc);
       // res.send({result, updatedRoom});
-      res.send(result)
+      res.send(result);
     });
 
     // update Room Status
-    app.patch('/room/status/:id', async (req, res) => {
+    app.patch("/room/status/:id", async (req, res) => {
       const id = req.params.id;
       const status = req.body.status;
       // change room availability status
@@ -254,7 +254,84 @@ async function run() {
       };
       const result = await roomsCollection.updateOne(query, updateDoc);
       res.send(result);
-    })
+    });
+
+    // get all booking for a guest
+    app.get("/my-bookings/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const query = { "guest.email": email };
+      const result = await bookingsCollection.find(query).toArray();
+      res.send(result);
+    });
+    // get all booking for a host
+    app.get(
+      "/my-bookings/:email",
+      verifyToken,
+      verifyHost,
+      async (req, res) => {
+        const email = req.params.email;
+        const query = { "host.email": email };
+        const result = await bookingsCollection.find(query).toArray();
+        res.send(result);
+      }
+    );
+
+    // delete a booking
+    app.delete("/booking/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Admin statistics
+    app.get("/admin-stat", verifyToken, verifyAdmin, async (req, res) => {
+      const bookingDetails = await bookingsCollection
+        .find(
+          {},
+          {
+            projection: {
+              date: 1,
+              price: 1,
+            },
+          }
+        )
+        .toArray();
+
+      const totalUsers = await usersCollection.countDocuments();
+      const totalRooms = await roomsCollection.countDocuments();
+      const totalPrice = await bookingDetails.reduce(
+        (sum, booking) => sum + booking?.price,
+        0
+      );
+
+      //       const data = [
+      //   ["Day", "Sales"],
+      //   ["9/5", 1000],
+      //   ["10/2", 1170],
+      //   ["11/1", 660],
+      //   ["12/11", 1030],
+      // ];
+
+      const chartData = bookingDetails.map((booking) => {
+        const day = new Date(booking?.date).getDate();
+        const month = new Date(booking?.date).getMonth() + 1;
+        const data = [`${day}/${month}`, booking?.price];
+        return data;
+      });
+
+      chartData.unshift(['Day', 'Sales'])
+      // chartData.splice(0, 0, ['Day', 'Sales'])
+
+      console.log(bookingDetails);
+      res.send({
+        totalUsers,
+        totalRooms,
+        totalBookings: bookingDetails?.length,
+        totalPrice,
+        chartData
+      });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });

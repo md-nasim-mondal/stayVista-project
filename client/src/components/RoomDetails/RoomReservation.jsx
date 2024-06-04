@@ -71,7 +71,7 @@ const RoomReservation = ({ room, refetch }) => {
           guest: {
             name: user?.displayName,
             email: user?.email,
-            image: user?.photURL,
+            image: user?.photoURL,
           },
         }}
       />

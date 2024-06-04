@@ -11,13 +11,14 @@ import HostMenu from "./Menu/HostMenu";
 import GuestMenu from "./Menu/GuestMenu";
 import AdminMenu from "./Menu/AdminMenu";
 import ToggleBtn from "../../Shared/Button/ToggleBtn";
+import LoadingSpinner from "./../../Shared/LoadingSpinner";
 
 const Sidebar = () => {
   const { logOut } = useAuth();
   const [isActive, setActive] = useState(false);
   const [toggle, setToggle] = useState(false);
   const [role, isLoading] = useRole();
-  console.log(role, isLoading);
+  // console.log(role, isLoading);
 
   // Sidebar Responsive Handler
   const handleToggle = () => {
@@ -28,6 +29,8 @@ const Sidebar = () => {
     // setToggle(event.target.checked);
     setToggle(!toggle)
   }
+
+  if(isLoading) return <LoadingSpinner/>
 
   return (
     <>
