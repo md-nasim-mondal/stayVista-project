@@ -101,7 +101,9 @@ const MyListings = () => {
                     <RoomDataRow
                       key={room?._id}
                       room={room}
-                      handleDelete={handleDelete}></RoomDataRow>
+                      handleDelete={handleDelete}
+                      refetch={refetch}
+                    ></RoomDataRow>
                   ))}
                 </tbody>
               </table>

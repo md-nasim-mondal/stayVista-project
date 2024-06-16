@@ -243,6 +243,18 @@ async function run() {
       res.send(result);
     });
 
+    // update room data
+    app.put("/room/update/:id", verifyToken, verifyHost, async (req, res) => {
+      const id = req.params.id;
+      const roomData = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: roomData,
+      };
+      const result = await roomsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
     // update Room Status
     app.patch("/room/status/:id", async (req, res) => {
       const id = req.params.id;
@@ -357,7 +369,7 @@ async function run() {
       );
       const { timestamp } = await usersCollection.findOne(
         { email },
-        { projection: {timestamp: 1} }
+        { projection: { timestamp: 1 } }
       );
       const chartData = bookingDetails.map((booking) => {
         const day = new Date(booking?.date).getDate();
@@ -375,7 +387,7 @@ async function run() {
         totalBookings: bookingDetails?.length,
         totalPrice,
         chartData,
-        hostSince: timestamp
+        hostSince: timestamp,
       });
     });
 
@@ -393,14 +405,14 @@ async function run() {
           }
         )
         .toArray();
-      
+
       const totalPrice = await bookingDetails.reduce(
         (sum, booking) => sum + booking?.price,
         0
       );
       const { timestamp } = await usersCollection.findOne(
         { email },
-        { projection: {timestamp: 1} }
+        { projection: { timestamp: 1 } }
       );
       const chartData = bookingDetails.map((booking) => {
         const day = new Date(booking?.date).getDate();
@@ -417,7 +429,7 @@ async function run() {
         totalBookings: bookingDetails?.length,
         totalPrice,
         chartData,
-        guestSince: timestamp
+        guestSince: timestamp,
       });
     });
 

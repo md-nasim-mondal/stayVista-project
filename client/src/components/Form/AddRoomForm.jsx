@@ -51,6 +51,7 @@ const AddRoomForm = ({
               <label htmlFor='location' className='block text-gray-600'>
                 Select Availability Range
               </label>
+              {/* Calender */}
               <DateRange
                 rangeColors={["#F43F5E"]}
                 editableDateInputs={true}

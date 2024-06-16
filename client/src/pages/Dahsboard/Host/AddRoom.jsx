@@ -23,7 +23,6 @@ const AddRoom = () => {
 
   // Date Range handler
   const handleDates = (range) => {
-    // console.log(range);
     setDates(range.selection);
   };
 
