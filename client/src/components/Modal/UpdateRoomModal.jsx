@@ -48,8 +48,8 @@ const UpdateRoomModal = ({ setIsEditModalOpen, isOpen, room, refetch }) => {
   };
 
   const handleSubmit = async (e) => {
-    setLoading(true);
     e.preventDefault();
+    setLoading(true);
     const updatedRoomData = Object.assign({}, roomData);
     delete updatedRoomData._id;
     try {
